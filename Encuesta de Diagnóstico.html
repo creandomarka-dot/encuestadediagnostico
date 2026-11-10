@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encuesta de Diagnóstico</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#0A0A0A;--black2:#151515;--yellow:#F5D000;--white:#FFFFFF;--gray:#A1A1A1;
+  --radius:10px;--transition:0.35s cubic-bezier(.4,0,.2,1);
+}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  background:var(--black);color:var(--white);min-height:100dvh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  line-height:1.6;overflow-x:hidden;
+}
+/* ── layout ── */
+.container{
+  width:100%;max-width:580px;padding:32px 24px;margin:0 auto;
+  min-height:100dvh;display:flex;flex-direction:column;justify-content:center;
+}
+/* ── progress ── */
+.progress-wrap{
+  position:fixed;top:0;left:0;width:100%;z-index:100;
+  background:var(--black2);padding:0;
+  opacity:0;transition:opacity var(--transition);pointer-events:none;
+}
+.progress-wrap.visible{opacity:1}
+.progress-bar{height:3px;background:var(--yellow);width:0;transition:width .5s ease}
+.progress-text{
+  text-align:center;font-size:.75rem;color:var(--gray);padding:8px 0 6px;
+  letter-spacing:.04em;
+}
+/* ── screens ── */
+.screen{
+  display:none;opacity:0;transform:translateY(18px);
+  transition:opacity var(--transition),transform var(--transition);
+}
+.screen.active{display:flex;flex-direction:column}
+.screen.show{opacity:1;transform:translateY(0)}
+
+/* ── welcome ── */
+.welcome-tag{
+  font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--yellow);
+  margin-bottom:20px;font-weight:600;
+}
+.welcome h1{
+  font-size:clamp(1.6rem,5vw,2.2rem);font-weight:700;line-height:1.15;
+  margin-bottom:18px;letter-spacing:-.01em;
+}
+.welcome h1 span{color:var(--yellow)}
+.welcome p{color:var(--gray);font-size:.95rem;margin-bottom:32px}
+.meta{display:flex;gap:24px;margin-bottom:40px}
+.meta-item{display:flex;align-items:center;gap:8px;color:var(--gray);font-size:.85rem}
+.meta-icon{
+  width:36px;height:36px;border-radius:50%;background:var(--black2);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.meta-icon svg{width:16px;height:16px;stroke:var(--yellow);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── buttons ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:16px 32px;border:none;border-radius:var(--radius);cursor:pointer;
+  font-size:.9rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  transition:all var(--transition);font-family:inherit;
+}
+.btn-primary{background:var(--yellow);color:var(--black)}
+.btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-secondary{
+  background:transparent;color:var(--gray);border:1px solid rgba(255,255,255,.1);
+}
+.btn-secondary:hover{border-color:var(--gray);color:var(--white)}
+.btn-full{width:100%}
+.btn-sm{padding:12px 24px;font-size:.8rem}
+
+/* ── question ── */
+.question-number{
+  font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--yellow);
+  margin-bottom:14px;font-weight:600;
+}
+.question-text{
+  font-size:clamp(1.1rem,3.5vw,1.35rem);font-weight:600;line-height:1.35;
+  margin-bottom:28px;
+}
+/* ── options ── */
+.options{display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
+.option{
+  padding:16px 20px;border-radius:var(--radius);cursor:pointer;
+  border:1px solid rgba(255,255,255,.08);background:var(--black2);
+  font-size:.9rem;color:var(--gray);transition:all var(--transition);
+  position:relative;padding-left:48px;
+}
+.option::before{
+  content:'';position:absolute;left:18px;top:50%;transform:translateY(-50%);
+  width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.15);
+  transition:all var(--transition);
+}
+.option:hover{border-color:rgba(245,208,0,.3);color:var(--white)}
+.option.selected{
+  border-color:var(--yellow);color:var(--white);background:rgba(245,208,0,.06);
+}
+.option.selected::before{
+  border-color:var(--yellow);background:var(--yellow);
+  box-shadow:inset 0 0 0 3px var(--black2);
+}
+/* ── textarea ── */
+.textarea-wrap{margin-bottom:32px}
+.textarea-wrap textarea{
+  width:100%;min-height:130px;padding:16px 20px;border-radius:var(--radius);
+  border:1px solid rgba(255,255,255,.08);background:var(--black2);
+  color:var(--white);font-family:inherit;font-size:.9rem;resize:vertical;
+  transition:border-color var(--transition);line-height:1.6;
+}
+.textarea-wrap textarea::placeholder{color:rgba(255,255,255,.25)}
+.textarea-wrap textarea:focus{outline:none;border-color:var(--yellow)}
+.textarea-label{
+  font-size:.75rem;color:var(--gray);margin-top:8px;text-align:right;
+}
+/* ── navigation ── */
+.nav{display:flex;gap:12px;margin-top:auto}
+.nav .btn{flex:1}
+.nav .btn-back{flex:0 0 auto;padding:12px 20px}
+
+/* ── final ── */
+.final h2{
+  font-size:clamp(1.3rem,4.5vw,1.8rem);font-weight:700;line-height:1.2;
+  margin-bottom:18px;
+}
+.final h2 span{color:var(--yellow)}
+.final p{color:var(--gray);font-size:.9rem;margin-bottom:16px}
+.final .btn{margin-top:12px}
+
+/* ── toast ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--black2);border:1px solid rgba(245,208,0,.25);color:var(--white);
+  padding:14px 24px;border-radius:var(--radius);font-size:.85rem;
+  opacity:0;transition:all .4s ease;z-index:200;pointer-events:none;
+  text-align:center;max-width:90vw;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── confirm screen ── */
+.confirm-icon{
+  width:56px;height:56px;border-radius:50%;background:rgba(245,208,0,.1);
+  display:flex;align-items:center;justify-content:center;margin-bottom:24px;
+}
+.confirm-icon svg{width:28px;height:28px;stroke:var(--yellow);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* ── resumen ── */
+.summary{margin:24px 0 20px;display:flex;flex-direction:column;gap:14px}
+.summary-item{
+  background:var(--black2);border-radius:var(--radius);padding:14px 18px;
+  border:1px solid rgba(255,255,255,.06);
+}
+.summary-label{
+  font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--yellow);
+  margin-bottom:6px;font-weight:600;
+}
+.summary-value{font-size:.88rem;color:var(--white);line-height:1.45}
+.share-links{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.share-links a{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 24px;border-radius:var(--radius);font-size:.85rem;
+  font-weight:600;letter-spacing:.04em;text-decoration:none;
+  text-transform:uppercase;font-family:inherit;transition:all var(--transition);
+}
+.btn-whatsapp{background:#25D366;color:#fff}
+.btn-whatsapp:hover{filter:brightness(1.1)}
+.btn-email{background:transparent;color:var(--gray);border:1px solid rgba(255,255,255,.1)}
+.btn-email:hover{border-color:var(--gray);color:var(--white)}
+
+/* ── validation ── */
+.shake{animation:shake .4s ease}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%,60%{transform:translateX(-6px)}
+  40%,80%{transform:translateX(6px)}
+}
+/* ── responsive ── */
+@media(max-width:480px){
+  .container{padding:24px 18px}
+  .btn{padding:14px 24px}
+  .option{padding:14px 16px;padding-left:44px;font-size:.85rem}
+}
+</style>
+</head>
+<body>
+
+<div class="progress-wrap" id="progressWrap">
+  <div class="progress-bar" id="progressBar"></div>
+  <div class="progress-text" id="progressText"></div>
+</div>
+
+<div class="container">
+
+  <!-- WELCOME -->
+  <div class="screen active show welcome" id="screenWelcome">
+    <div class="welcome-tag">Encuesta de experiencia</div>
+    <h1>Tu opinión nos ayuda <span>a crecer.</span></h1>
+    <p>Queremos saber cómo fue tu experiencia durante nuestra sesión de evaluación y diagnóstico. Tus respuestas nos permitirán comprender mejor tus necesidades y seguir aportándote valor.</p>
+    <div class="meta">
+      <div class="meta-item">
+        <div class="meta-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <span>2 minutos</span>
+      </div>
+      <div class="meta-item">
+        <div class="meta-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        </div>
+        <span>7 preguntas</span>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="startSurvey()">Comenzar encuesta</button>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div class="screen" id="screenQuestion">
+    <div class="question-number" id="qNumber"></div>
+    <div class="question-text" id="qText"></div>
+    <div id="qBody"></div>
+    <div class="nav">
+      <button class="btn btn-secondary btn-back" id="btnBack" onclick="prevQuestion()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="btn btn-primary" id="btnNext" onclick="nextQuestion()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- FINAL -->
+  <div class="screen final" id="screenFinal">
+    <div class="confirm-icon">
+      <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <h2>Gracias por compartir <span>tu experiencia.</span></h2>
+    <p>Cada marca tiene un potencial diferente. Conocer tus objetivos y necesidades nos permite identificar las mejores oportunidades para fortalecer tu comunicación digital.</p>
+    <p>Queremos que tus redes sociales dejen de ser solamente un espacio para publicar y se conviertan en una herramienta estratégica para posicionar tu marca y conectar con nuevos clientes.</p>
+    <button class="btn btn-primary btn-full" onclick="submitResponses()" id="btnSubmit">Enviar mis respuestas</button>
+  </div>
+
+  <!-- CONFIRMATION -->
+  <div class="screen" id="screenConfirm">
+    <div class="confirm-icon">
+      <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <h2>Respuestas registradas <span>con éxito.</span></h2>
+    <p>Gracias por tu tiempo. A continuación puedes ver un resumen de tus respuestas y compartirlas con nosotros.</p>
+    <div class="summary" id="summaryBox"></div>
+    <div class="share-links">
+      <a class="btn-whatsapp" id="waLink" href="#" target="_blank">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Enviar por WhatsApp
+      </a>
+      <a class="btn-email" id="emailLink" href="#" target="_blank">
+        Enviar por correo
+      </a>
+    </div>
+    <button class="btn btn-secondary btn-full btn-sm" onclick="copyResponses()" style="margin-top:10px">Copiar respuestas</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONFIGURACIÓN DEL WEBHOOK
+   Cambia esta URL por tu endpoint real
+   (Google Sheets script, CRM, Zapier, etc.)
+   ═══════════════════════════════════════════ */
+const WEBHOOK_URL = '';          // ← URL de webhook (opcional)
+const WHATSAPP_NUMBER = '';      // ← tu número con código país, ej: '34612345678'
+const NOTIFY_EMAIL = '';         // ← tu email para recibir respuestas
+
+/* ── datos ── */
+const questions = [
+  {
+    id: 'calificacion',
+    text: '¿Cómo calificarías nuestra llamada de evaluación y diagnóstico?',
+    options: ['Excelente', 'Muy buena', 'Buena', 'Puede mejorar']
+  },
+  {
+    id: 'herramientas',
+    text: '¿Consideras que obtuviste conocimientos o herramientas que puedes aplicar a tus redes sociales?',
+    options: ['Sí, muchas herramientas', 'Sí, algunas ideas útiles', 'Necesito orientación para aplicarlas', 'No del todo']
+  },
+  {
+    id: 'atencion',
+    text: 'Después de nuestra llamada, ¿qué aspecto consideras que necesita mayor atención en tu marca?',
+    options: ['Estrategia y posicionamiento', 'Creación de contenido y videos', 'Gestión y crecimiento de redes sociales', 'Captación de clientes y ventas', 'Todo lo anterior']
+  },
+  {
+    id: 'dificultad',
+    text: '¿Cuál es actualmente tu mayor dificultad con las redes sociales?',
+    options: ['No tengo tiempo para gestionarlas', 'No sé qué contenido publicar', 'Publico, pero no consigo resultados', 'No logro convertir seguidores en clientes', 'No tengo una estrategia definida']
+  },
+  {
+    id: 'acompanamiento',
+    text: '¿Qué tipo de acompañamiento te ayudaría más en este momento?',
+    options: ['Asesoría estratégica personalizada', 'Planificación y creación de contenido', 'Gestión integral de mis redes sociales', 'Acompañamiento mensual y seguimiento', 'Me gustaría conocer las opciones']
+  },
+  {
+    id: 'propuesta',
+    text: '¿Estarías interesado/a en conocer una propuesta para trabajar estos aspectos con nuestro acompañamiento?',
+    options: ['Sí, me gustaría conocerla', 'Quizás, quisiera saber más', 'Por ahora no, pero más adelante']
+  },
+  {
+    id: 'comentario',
+    text: '¿Hay algo específico que te gustaría mejorar o conseguir con tus redes sociales?',
+    type: 'textarea'
+  }
+];
+
+const answers = {};
+let current = 0;
+
+/* ── navegación ── */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('show');
+    setTimeout(() => s.classList.remove('active'), 350);
+  });
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    el.classList.add('active');
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+  }, 360);
+}
+
+function updateProgress() {
+  const wrap = document.getElementById('progressWrap');
+  const bar = document.getElementById('progressBar');
+  const text = document.getElementById('progressText');
+  wrap.classList.add('visible');
+  const pct = ((current + 1) / questions.length) * 100;
+  bar.style.width = pct + '%';
+  text.textContent = `Pregunta ${current + 1} de ${questions.length}`;
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  document.getElementById('qNumber').textContent = `Pregunta ${current + 1} de ${questions.length}`;
+  document.getElementById('qText').textContent = q.text;
+
+  const body = document.getElementById('qBody');
+  body.innerHTML = '';
+
+  if (q.type === 'textarea') {
+    const wrap = document.createElement('div');
+    wrap.className = 'textarea-wrap';
+    const ta = document.createElement('textarea');
+    ta.placeholder = 'Escribe tu respuesta aquí...';
+    ta.value = answers[q.id] || '';
+    ta.oninput = () => { answers[q.id] = ta.value; };
+    wrap.appendChild(ta);
+    const label = document.createElement('div');
+    label.className = 'textarea-label';
+    label.textContent = 'Esta pregunta es opcional';
+    wrap.appendChild(label);
+    body.appendChild(wrap);
+  } else {
+    const opts = document.createElement('div');
+    opts.className = 'options';
+    q.options.forEach(opt => {
+      const div = document.createElement('div');
+      div.className = 'option' + (answers[q.id] === opt ? ' selected' : '');
+      div.textContent = opt;
+      div.onclick = () => {
+        opts.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+        div.classList.add('selected');
+        answers[q.id] = opt;
+      };
+      opts.appendChild(div);
+    });
+    body.appendChild(opts);
+  }
+
+  document.getElementById('btnBack').style.display = current === 0 ? 'none' : '';
+  document.getElementById('btnNext').textContent = current === questions.length - 1 ? 'Finalizar' : 'Continuar';
+  updateProgress();
+}
+
+function startSurvey() {
+  showScreen('screenQuestion');
+  setTimeout(renderQuestion, 380);
+}
+
+function nextQuestion() {
+  const q = questions[current];
+  if (q.type !== 'textarea' && !answers[q.id]) {
+    const opts = document.querySelector('.options');
+    if (opts) { opts.classList.add('shake'); setTimeout(() => opts.classList.remove('shake'), 400); }
+    showToast('Selecciona una opción para continuar');
+    return;
+  }
+  if (current < questions.length - 1) {
+    current++;
+    renderQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    document.getElementById('progressWrap').classList.remove('visible');
+    showScreen('screenFinal');
+  }
+}
+
+function prevQuestion() {
+  if (current > 0) {
+    current--;
+    renderQuestion();
+  }
+}
+
+/* ── respuestas ── */
+function collectResponses() {
+  const data = {
+    timestamp: new Date().toISOString(),
+    respuestas: {}
+  };
+  questions.forEach(q => {
+    data.respuestas[q.id] = answers[q.id] || (q.type === 'textarea' ? '' : null);
+  });
+  return data;
+}
+
+const questionLabels = {
+  calificacion: 'Calificación de la llamada',
+  herramientas: 'Herramientas obtenidas',
+  atencion: 'Aspecto que necesita atención',
+  dificultad: 'Mayor dificultad',
+  acompanamiento: 'Tipo de acompañamiento',
+  propuesta: 'Interés en propuesta',
+  comentario: 'Comentario adicional'
+};
+
+function buildSummary(data) {
+  const box = document.getElementById('summaryBox');
+  box.innerHTML = '';
+  for (const [key, val] of Object.entries(data.respuestas)) {
+    if (!val && val !== '') continue;
+    const item = document.createElement('div');
+    item.className = 'summary-item';
+    item.innerHTML = `<div class="summary-label">${questionLabels[key] || key}</div><div class="summary-value">${val || '—'}</div>`;
+    box.appendChild(item);
+  }
+}
+
+function buildPlainText(data) {
+  let t = '*Encuesta de Diagnóstico*\n\n';
+  for (const [key, val] of Object.entries(data.respuestas)) {
+    if (!val && val !== '') continue;
+    t += `*${questionLabels[key] || key}:*\n${val || '—'}\n\n`;
+  }
+  t += `_Enviado: ${new Date().toLocaleString('es-ES')}_`;
+  return t;
+}
+
+async function submitResponses() {
+  const data = collectResponses();
+
+  if (WEBHOOK_URL) {
+    try {
+      await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+    } catch (e) { /* continúa al resumen */ }
+  }
+
+  buildSummary(data);
+  const plain = buildPlainText(data);
+  const waPhone = WHATSAPP_NUMBER ? `/${WHATSAPP_NUMBER}` : '';
+  document.getElementById('waLink').href = `https://wa.me${waPhone}?text=${encodeURIComponent(plain)}`;
+
+  const emailSubject = encodeURIComponent('Respuestas — Encuesta de Diagnóstico');
+  const emailBody = encodeURIComponent(plain.replace(/\*/g, '').replace(/_/g, ''));
+  document.getElementById('emailLink').href = `mailto:${NOTIFY_EMAIL}?subject=${emailSubject}&body=${emailBody}`;
+
+  showScreen('screenConfirm');
+}
+
+function copyResponses() {
+  const data = collectResponses();
+  const text = JSON.stringify(data, null, 2);
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Respuestas copiadas al portapapeles');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Respuestas copiadas al portapapeles');
+  });
+}
+
+/* ── toast ── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
